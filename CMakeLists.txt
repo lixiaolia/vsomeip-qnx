@@ -6,6 +6,7 @@
 cmake_minimum_required (VERSION 2.8.12)
 project (vsomeip)
 
+set (CMAKE_CXX_STANDARD 11)
 set (VSOMEIP_NAME vsomeip3)
 set (VSOMEIP_COMPAT_NAME vsomeip)
 
@@ -83,15 +84,28 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     set(OS_CXX_FLAGS "-pthread")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+    set(OS "QNX")
+    set(DL_LIBRARY "")
+    set(EXPORTSYMBOLS "-Wl,-export-dynamic -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/exportmap.gcc")
+    set(NO_DEPRECATED "")
+    set(OPTIMIZE "")
+    set(OS_CXX_FLAGS "-D_GLIBCXX_USE_NANOSLEEP -lsocket -O -Wall -Wextra -Wformat -Wformat-security -Wconversion -fexceptions -fstrict-aliasing -fstack-protector -fasynchronous-unwind-tables -fno-omit-frame-pointer -D_FORTIFY_SOURCE=2")
+	set(Boost_USE_STATIC_LIBS_ON)
+endif (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+
 ################################################################################
 # Options
 ################################################################################
 
 # DLT
+if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+else ()
 if (DISABLE_DLT)
 set (VSOMEIP_ENABLE_DLT 0)
 else ()
 set (VSOMEIP_ENABLE_DLT 1)
+endif ()
 endif ()
 
 # Signal handling
@@ -140,7 +154,14 @@ endif ()
 find_package(Threads REQUIRED)
 
 # Boost
+if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+set(BOOST_SYSTEM_LIB ${Boost_LIBRARY_DIR}/libboost_system.a)
+set(BOOST_THREAD_LIB ${Boost_LIBRARY_DIR}/libboost_thread.a)
+set(BOOST_FILESYSTEM_LIB ${Boost_LIBRARY_DIR}/libboost_filesystem.a)
+else ()
 find_package( Boost 1.55 COMPONENTS system thread filesystem REQUIRED )
+endif ()
+
 include_directories( ${Boost_INCLUDE_DIR} )
 
 if(Boost_FOUND)
@@ -163,6 +184,9 @@ else()
   set(VSOMEIP_BOOST_VERSION ${Boost_VERSION})
 endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+	set(VSOMEIP_BOOST_HELPER implementation/helper/1.55)
+else()
 message( STATUS "Using boost version: ${VSOMEIP_BOOST_VERSION}" )
 if (${VSOMEIP_BOOST_VERSION} GREATER 107400)
 message( ERROR "boost version ${VSOMEIP_BOOST_VERSION} is not (yet) supported. Latest supported version is 1.74.0" )
@@ -175,19 +199,27 @@ set(VSOMEIP_BOOST_HELPER implementation/helper/1.66)
 else()
 set(VSOMEIP_BOOST_HELPER implementation/helper/1.55)
 endif()
+endif()
 
 find_package(PkgConfig)
 
 # DLT
+if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+else()
 if(VSOMEIP_ENABLE_DLT EQUAL 1)
 pkg_check_modules(DLT "automotive-dlt >= 2.11")
 if(DLT_FOUND) 
      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_DLT")
 endif(DLT_FOUND)
 endif()
+endif()
 
 # SystemD
+if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+# QNX doesn't have systemd
+else()
 pkg_check_modules(SystemD "libsystemd")
+endif()
 
 if(NOT SystemD_FOUND OR ${CMAKE_SYSTEM_NAME} MATCHES "Android")
 MESSAGE( STATUS "Systemd was not found, watchdog disabled!")
@@ -234,10 +266,14 @@ if (MSVC)
     link_directories(${Boost_LIBRARY_DIR_DEBUG})
     ADD_DEFINITIONS( -DBOOST_ALL_DYN_LINK )
 else()
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D${OS} ${OS_CXX_FLAGS} -g ${OPTIMIZE} -std=c++11 ${NO_DEPRECATED} ${EXPORTSYMBOLS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D${OS} ${OS_CXX_FLAGS} -g ${OPTIMIZE} ${NO_DEPRECATED} ${EXPORTSYMBOLS}")
     if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Android")
-        set(USE_RT "rt")
-    endif()
+        if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+			set(USE_RT "")
+		else()
+    		set(USE_RT "rt")
+    	endif()
+	endif()
 endif()
 
 ################################################################################
@@ -253,8 +289,11 @@ if (VSOMEIP_ENABLE_MULTIPLE_ROUTING_MANAGERS EQUAL 0)
     if (MSVC)
         set_target_properties(${VSOMEIP_NAME}-cfg PROPERTIES COMPILE_DEFINITIONS "VSOMEIP_DLL_COMPILATION_PLUGIN")
     endif()
-
-    target_link_libraries(${VSOMEIP_NAME}-cfg ${VSOMEIP_NAME} ${Boost_LIBRARIES} ${USE_RT} ${DL_LIBRARY} ${OS_LIBS})
+		if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+			target_link_libraries(${VSOMEIP_NAME}-cfg ${VSOMEIP_NAME} ${BOOST_SYSTEM_LIB} ${BOOST_THREAD_LIB} ${BOOST_FILESYSTEM_LIB} ${USE_RT} ${DL_LIBRARY} ${OS_LIBS})
+		else()
+    		target_link_libraries(${VSOMEIP_NAME}-cfg ${VSOMEIP_NAME} ${Boost_LIBRARIES} ${USE_RT} ${DL_LIBRARY} ${OS_LIBS})
+		endif()
 endif ()
 
 ################################################################################
@@ -290,7 +329,11 @@ target_include_directories(${VSOMEIP_NAME} INTERFACE
 # them (which shouldn't be required). ${Boost_LIBRARIES} includes absolute
 # build host paths as of writing, which also makes this important as it breaks
 # the build.
-target_link_libraries(${VSOMEIP_NAME} PRIVATE ${Boost_LIBRARIES} ${USE_RT} ${DL_LIBRARY} ${DLT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${OS_LIBS})
+if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+	target_link_libraries(${VSOMEIP_NAME} PRIVATE ${BOOST_SYSTEM_LIB} ${BOOST_THREAD_LIB} ${BOOST_FILESYSTEM_LIB} ${USE_RT} ${DL_LIBRARY} ${DLT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${OS_LIBS})
+else()
+	target_link_libraries(${VSOMEIP_NAME} PRIVATE ${Boost_LIBRARIES} ${USE_RT} ${DL_LIBRARY} ${DLT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${OS_LIBS})
+endif()
 
 ################################################################################
 # Service Discovery library
@@ -305,8 +348,11 @@ set_target_properties (${VSOMEIP_NAME}-sd PROPERTIES VERSION ${VSOMEIP_VERSION} 
 if (MSVC)
     set_target_properties(${VSOMEIP_NAME}-sd PROPERTIES COMPILE_DEFINITIONS "VSOMEIP_DLL_COMPILATION_PLUGIN")
 endif ()
-
-target_link_libraries(${VSOMEIP_NAME}-sd ${VSOMEIP_NAME} ${Boost_LIBRARIES} ${USE_RT} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${OS_LIBS})
+if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+	target_link_libraries(${VSOMEIP_NAME}-sd ${VSOMEIP_NAME} ${BOOST_SYSTEM_LIB} ${BOOST_THREAD_LIB} ${BOOST_FILESYSTEM_LIB} ${USE_RT} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${OS_LIBS})
+else()
+	target_link_libraries(${VSOMEIP_NAME}-sd ${VSOMEIP_NAME} ${Boost_LIBRARIES} ${USE_RT} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${OS_LIBS})
+endif()
 
 
 ################################################################################
@@ -323,7 +369,11 @@ if (MSVC)
     set_target_properties(${VSOMEIP_NAME}-e2e PROPERTIES COMPILE_DEFINITIONS "VSOMEIP_DLL_COMPILATION_PLUGIN")
 endif ()
 
-target_link_libraries(${VSOMEIP_NAME}-e2e ${VSOMEIP_NAME} ${Boost_LIBRARIES} ${USE_RT} ${DL_LIBRARY} ${OS_LIBS})
+if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+	target_link_libraries(${VSOMEIP_NAME}-e2e ${VSOMEIP_NAME} ${BOOST_SYSTEM_LIB} ${BOOST_THREAD_LIB} ${BOOST_FILESYSTEM_LIB} ${USE_RT} ${DL_LIBRARY} ${OS_LIBS})
+else()
+	target_link_libraries(${VSOMEIP_NAME}-e2e ${VSOMEIP_NAME} ${Boost_LIBRARIES} ${USE_RT} ${DL_LIBRARY} ${OS_LIBS})
+endif()
 
 ################################################################################
 # Compatibility library
@@ -354,7 +404,11 @@ target_include_directories(
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> # for generated files in build mode
     $<INSTALL_INTERFACE:include/compat> # for clients in install mode
 )
-target_link_libraries(${VSOMEIP_COMPAT_NAME} PRIVATE ${VSOMEIP_NAME} ${Boost_LIBRARIES} ${USE_RT} ${DL_LIBRARY} ${OS_LIBS})
+if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+	target_link_libraries(${VSOMEIP_COMPAT_NAME} PRIVATE ${VSOMEIP_NAME} ${BOOST_SYSTEM_LIB} ${BOOST_THREAD_LIB} ${BOOST_FILESYSTEM_LIB} ${USE_RT} ${DL_LIBRARY} ${OS_LIBS})
+else()
+	target_link_libraries(${VSOMEIP_COMPAT_NAME} PRIVATE ${VSOMEIP_NAME} ${Boost_LIBRARIES} ${USE_RT} ${DL_LIBRARY} ${OS_LIBS})
+endif ()
 
 endif ()
 
@@ -587,7 +641,7 @@ endif()
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Android")
     # build routing manager daemon (Non-Windows only)
     if (NOT MSVC)
-    add_subdirectory( examples/routingmanagerd )
+    	add_subdirectory( examples/routingmanagerd )
     endif()
 
     # build tools
@@ -596,9 +650,9 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Android")
 
     # build examples
     add_custom_target( examples )
-    add_subdirectory( examples EXCLUDE_FROM_ALL )
+    add_subdirectory( examples )
     add_custom_target( hello_world )
-    add_subdirectory( examples/hello_world  EXCLUDE_FROM_ALL )
+    add_subdirectory( examples/hello_world )
 endif()
 
 ##############################################################################

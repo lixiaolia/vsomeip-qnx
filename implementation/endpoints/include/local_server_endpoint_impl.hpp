@@ -12,8 +12,9 @@
 #include <memory>
 
 #include <boost/asio/io_service.hpp>
+#ifndef _WIN32
 #include <boost/asio/local/stream_protocol_ext.hpp>
-
+#endif
 
 #ifdef _WIN32
 #include <boost/asio/ip/tcp.hpp>

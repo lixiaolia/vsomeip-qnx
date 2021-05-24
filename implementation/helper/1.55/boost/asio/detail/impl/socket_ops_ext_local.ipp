@@ -48,7 +48,7 @@ signed_size_type recv(socket_type s, buf* bufs, size_t count,
   msghdr msg = msghdr();
   msg.msg_iov = bufs;
   msg.msg_iovlen = static_cast<int>(count);
-
+#ifndef __QNX__
   union {
     struct cmsghdr cmh;
     char   control[CMSG_SPACE(sizeof(struct ucred))];
@@ -62,11 +62,11 @@ signed_size_type recv(socket_type s, buf* bufs, size_t count,
   // Set 'msg' fields to describe 'control_un'
   msg.msg_control = control_un.control;
   msg.msg_controllen = sizeof(control_un.control);
-
+#endif
   signed_size_type result = error_wrapper(::recvmsg(s, &msg, flags), ec);
   if (result >= 0) {
     ec = boost::system::error_code();
-
+#ifndef __QNX__
 	// Find UID / GID
 	for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
 		 cmsg != NULL;
@@ -82,6 +82,7 @@ signed_size_type recv(socket_type s, buf* bufs, size_t count,
         gid = ucredp->gid;
       }
 	}
+#endif
   }
   return result;
 #endif // defined(BOOST_ASIO_WINDOWS) || defined(__CYGWIN__)
@@ -119,7 +120,7 @@ signed_size_type recvfrom(socket_type s, buf* bufs, size_t count,
   msg.msg_namelen = static_cast<int>(*addrlen);
   msg.msg_iov = bufs;
   msg.msg_iovlen = static_cast<int>(count);
-
+#ifndef __QNX__
   union {
     struct cmsghdr cmh;
     char   control[CMSG_SPACE(sizeof(struct ucred))];
@@ -133,11 +134,12 @@ signed_size_type recvfrom(socket_type s, buf* bufs, size_t count,
   // Set 'msg' fields to describe 'control_un'
   msg.msg_control = control_un.control;
   msg.msg_controllen = sizeof(control_un.control);
-
+#endif
   signed_size_type result = error_wrapper(::recvmsg(s, &msg, flags), ec);
   *addrlen = msg.msg_namelen;
   if (result >= 0) {
     ec = boost::system::error_code();
+#ifndef __QNX__
     // Find UID / GID
 	for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
 		 cmsg != NULL;
@@ -153,6 +155,7 @@ signed_size_type recvfrom(socket_type s, buf* bufs, size_t count,
         gid = ucredp->gid;
       }
 	}
+#endif
   }
   return result;
 #endif // defined(BOOST_ASIO_WINDOWS) || defined(__CYGWIN__)

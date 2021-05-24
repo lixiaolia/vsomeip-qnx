@@ -40,7 +40,7 @@ std::shared_ptr<application> runtime_impl::create_application(
     std::string its_name_ = _name;
     auto found_application = applications_.find(_name);
     if( found_application != applications_.end()) {
-        its_name_ += "_" + std::to_string(postfix_id++);
+        its_name_ += "_" + boost::to_string(postfix_id++);
     }
     std::shared_ptr<application> application = std::make_shared<application_impl>(its_name_);
     applications_[its_name_] = application;

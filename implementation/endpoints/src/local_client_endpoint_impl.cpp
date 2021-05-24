@@ -18,7 +18,7 @@
 #include "../../security/include/security.hpp"
 
 // Credentials
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__QNX__)
 #include "../include/credentials.hpp"
 #endif
 
@@ -126,7 +126,7 @@ void local_client_endpoint_impl::connect() {
             socket_->connect(remote_, its_connect_error);
 
 // Credentials
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__QNX__)
             if (!its_connect_error) {
                 auto its_host = endpoint_host_.lock();
                 if (its_host) {

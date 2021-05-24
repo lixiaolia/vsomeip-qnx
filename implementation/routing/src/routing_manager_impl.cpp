@@ -162,7 +162,7 @@ void routing_manager_impl::init() {
 }
 
 void routing_manager_impl::start() {
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__QNX__)
     boost::asio::ip::address its_multicast;
     try {
         its_multicast = boost::asio::ip::address::from_string(configuration_->get_sd_multicast());
@@ -249,7 +249,7 @@ void routing_manager_impl::stop() {
         std::lock_guard<std::mutex> its_lock(version_log_timer_mutex_);
         version_log_timer_.cancel();
     }
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__QNX__)
     {
         boost::system::error_code ec;
         std::lock_guard<std::mutex> its_lock(memory_log_timer_mutex_);

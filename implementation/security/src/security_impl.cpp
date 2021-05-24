@@ -692,10 +692,10 @@ security_impl::load_policy(const boost::property_tree::ptree &_tree) {
     bool allow_deny_set(false);
     for (auto i = _tree.begin(); i != _tree.end(); ++i) {
         if (i->first == "credentials") {
-            boost::icl::interval_set<uid_t> its_uid_interval_set;
-            boost::icl::interval_set<gid_t> its_gid_interval_set;
-            boost::icl::discrete_interval<uid_t> its_uid_interval;
-            boost::icl::discrete_interval<gid_t> its_gid_interval;
+            boost::icl::interval_set<uint32_t> its_uid_interval_set;
+            boost::icl::interval_set<uint32_t> its_gid_interval_set;
+            boost::icl::discrete_interval<uint32_t> its_uid_interval;
+            boost::icl::discrete_interval<uint32_t> its_gid_interval;
 
             bool has_uid(false), has_gid(false);
             bool has_uid_range(false), has_gid_range(false);
@@ -712,12 +712,12 @@ security_impl::load_policy(const boost::property_tree::ptree &_tree) {
                             uint32_t its_uid;
                             read_data(its_value, its_uid);
                             its_uid_interval = boost::icl::construct<
-                                boost::icl::discrete_interval<uid_t> >(
+                                boost::icl::discrete_interval<uint32_t> >(
                                         its_uid, its_uid,
                                         boost::icl::interval_bounds::closed());
                         } else {
                             its_uid_interval = boost::icl::construct<
-                                boost::icl::discrete_interval<uid_t> >(
+                                boost::icl::discrete_interval<uint32_t> >(
                                         std::numeric_limits<uid_t>::min(),
                                         std::numeric_limits<uid_t>::max(),
                                         boost::icl::interval_bounds::closed());
@@ -733,12 +733,12 @@ security_impl::load_policy(const boost::property_tree::ptree &_tree) {
                             uint32_t its_gid;
                             read_data(its_value, its_gid);
                             its_gid_interval = boost::icl::construct<
-                                boost::icl::discrete_interval<gid_t> >(
+                                boost::icl::discrete_interval<uint32_t> >(
                                         its_gid, its_gid,
                                         boost::icl::interval_bounds::closed());
                         } else {
                             its_gid_interval = boost::icl::construct<
-                                boost::icl::discrete_interval<gid_t> >(
+                                boost::icl::discrete_interval<uint32_t> >(
                                         std::numeric_limits<gid_t>::min(),
                                         std::numeric_limits<gid_t>::max(),
                                         boost::icl::interval_bounds::closed());
@@ -909,12 +909,12 @@ security_impl::load_policy_body(std::shared_ptr<policy> &_policy,
 void
 security_impl::load_credential(
         const boost::property_tree::ptree &_tree,
-        boost::icl::interval_map<uid_t,
-            boost::icl::interval_set<gid_t> > &_credentials) {
+        boost::icl::interval_map<uint32_t,
+            boost::icl::interval_set<uint32_t> > &_credentials) {
 
     for (auto i = _tree.begin(); i != _tree.end(); ++i) {
-        boost::icl::interval_set<uid_t> its_uid_interval_set;
-        boost::icl::interval_set<gid_t> its_gid_interval_set;
+        boost::icl::interval_set<uint32_t> its_uid_interval_set;
+        boost::icl::interval_set<uint32_t> its_gid_interval_set;
 
         for (auto j = i->second.begin(); j != i->second.end(); ++j) {
             std::string its_key(j->first);

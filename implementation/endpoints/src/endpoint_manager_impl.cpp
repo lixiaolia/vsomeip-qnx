@@ -610,7 +610,7 @@ endpoint_manager_impl::create_local_server(
         #endif
         *_is_socket_activated = true;
     } else {
-        #if _WIN32
+        #ifdef _WIN32
             ::_unlink(its_endpoint_path.c_str());
             int port = VSOMEIP_INTERNAL_BASE_PORT;
             VSOMEIP_INFO << "Routing endpoint at " << port;

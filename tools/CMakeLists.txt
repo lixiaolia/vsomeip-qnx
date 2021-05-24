@@ -9,7 +9,9 @@ cmake_minimum_required (VERSION 2.8)
 add_executable(vsomeip_ctrl EXCLUDE_FROM_ALL vsomeip_ctrl.cpp)
 target_link_libraries(vsomeip_ctrl
     vsomeip3
-    ${Boost_LIBRARIES}
+    ${BOOST_SYSTEM_LIB}
+    ${BOOST_THREAD_LIB}
+    ${BOOST_FILESYSTEM_LIB}
     ${DL_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
 )

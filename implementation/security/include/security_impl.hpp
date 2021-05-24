@@ -72,7 +72,7 @@ private:
     void load_policy_body(std::shared_ptr<policy> &_policy,
             const boost::property_tree::ptree::const_iterator &_tree);
     void load_credential(const boost::property_tree::ptree &_tree,
-            boost::icl::interval_map<uid_t, boost::icl::interval_set<gid_t> > &_ids);
+            boost::icl::interval_map<uint32_t, boost::icl::interval_set<uint32_t> > &_ids);
     bool load_routing_credentials(const configuration_element &_element);
     template<typename T_>
     void load_interval_set(const boost::property_tree::ptree &_tree,

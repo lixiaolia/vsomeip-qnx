@@ -1586,7 +1586,7 @@ void routing_manager_proxy::on_routing_info(const byte_t *_data,
                     VSOMEIP_INFO << std::hex << "Application/Client " << get_client()
                                 << " (" << host_->get_name() << ") is registered.";
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__QNX__)
                     if (!its_security->check_credentials(get_client(), own_uid_, own_gid_)) {
                         VSOMEIP_ERROR << "vSomeIP Security: Client 0x" << std::hex << get_client()
                                 << " : routing_manager_proxy::on_routing_info: RIE_ADD_CLIENT: isn't allowed"
@@ -1858,7 +1858,7 @@ void routing_manager_proxy::reconnect(const std::unordered_set<client_t> &_clien
     VSOMEIP_INFO << std::hex << "Application/Client " << get_client()
             <<": Reconnecting to routing manager.";
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__QNX__)
     if (!its_security->check_credentials(get_client(), own_uid_, own_gid_)) {
         VSOMEIP_ERROR << "vSomeIP Security: Client 0x" << std::hex << get_client()
                 << " :  routing_manager_proxy::reconnect: isn't allowed"
@@ -2602,7 +2602,7 @@ void routing_manager_proxy::on_update_security_credentials(const byte_t *_data, 
         its_gid_set.insert(its_gid);
 
         its_policy->credentials_ += std::make_pair(
-                boost::icl::interval<uid_t>::closed(its_uid, its_uid), its_gid_set);
+            boost::icl::interval<uint32_t>::closed(its_uid, its_uid), its_gid_set);
         its_policy->allow_who_ = true;
         its_policy->allow_what_ = true;
 

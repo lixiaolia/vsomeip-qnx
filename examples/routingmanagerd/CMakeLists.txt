@@ -7,7 +7,11 @@ cmake_minimum_required (VERSION 2.8)
 
 # Daemon
 add_executable(routingmanagerd routingmanagerd.cpp)
+if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+target_link_libraries(routingmanagerd ${VSOMEIP_NAME} ${BOOST_SYSTEM_LIB} ${BOOST_THREAD_LIB} ${BOOST_FILESYSTEM_LIB} ${DL_LIBRARY} ${DLT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+else()
 target_link_libraries(routingmanagerd ${VSOMEIP_NAME} ${Boost_LIBRARIES} ${DL_LIBRARY} ${DLT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+endif ()
 add_dependencies(routingmanagerd ${VSOMEIP_NAME})
 
 option(VSOMEIP_INSTALL_ROUTINGMANAGERD "Whether or not to install the routing manager daemon.")

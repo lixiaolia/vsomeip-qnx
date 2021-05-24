@@ -13,7 +13,7 @@
 namespace vsomeip_v3 {
 
 bool
-policy::get_uid_gid(uid_t &_uid, gid_t &_gid) const {
+policy::get_uid_gid(uint32_t &_uid, uint32_t &_gid) const {
 
     if (credentials_.size() != 1)
         return (false);
@@ -36,7 +36,7 @@ policy::get_uid_gid(uid_t &_uid, gid_t &_gid) const {
 
 bool
 policy::deserialize_uid_gid(const byte_t * &_data, uint32_t &_size,
-            uid_t &_uid, gid_t &_gid) const {
+            uint32_t &_uid, uint32_t &_gid) const {
 
     bool its_result;
 
@@ -55,8 +55,8 @@ bool
 policy::deserialize(const byte_t * &_data, uint32_t &_size) {
 
     bool its_result;
-    uid_t its_uid;
-    gid_t its_gid;
+    uint32_t its_uid;
+    uint32_t its_gid;
 
     std::lock_guard<std::mutex> its_lock(mutex_);
 
@@ -66,8 +66,8 @@ policy::deserialize(const byte_t * &_data, uint32_t &_size) {
 
     // Fill policy uid/gid
     const auto its_uid_interval
-        = boost::icl::interval<uid_t>::closed(its_uid, its_uid);
-    boost::icl::interval_set<gid_t> its_gid_set;
+        = boost::icl::interval<uint32_t>::closed(its_uid, its_uid);
+    boost::icl::interval_set<uint32_t> its_gid_set;
     its_gid_set.insert(its_gid);
     credentials_ += std::make_pair(its_uid_interval, its_gid_set);
 
