@@ -54,23 +54,18 @@ struct policy {
 
     // Returns true if the policy is defined for single uid/gid pair.
     // uid & gid are copied to the arguments. Otherwise, returns false.
-    bool get_uid_gid(uint32_t &_uid, uint32_t &_gid) const;
+    bool get_uid_gid(uid_t &_uid, gid_t &_gid) const;
 
     bool deserialize_uid_gid(const byte_t * &_data, uint32_t &_size,
-            uint32_t &_uid, uint32_t &_gid) const;
+            uid_t &_uid, gid_t &_gid) const;
     bool deserialize(const byte_t * &_data, uint32_t &_size);
     bool serialize(std::vector<byte_t> &_data) const;
 
     void print() const;
 
     // Members
-    #ifdef __QNX__
-    boost::icl::interval_map<uint32_t,
-        boost::icl::interval_set<uint32_t> > credentials_;
-    #else
     boost::icl::interval_map<uid_t,
         boost::icl::interval_set<gid_t> > credentials_;
-    #endif
     bool allow_who_;
 
     boost::icl::interval_map<service_t,

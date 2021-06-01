@@ -8,6 +8,10 @@
 #include <sstream>
 
 #include <sys/types.h>
+#ifdef __QNX__
+#include <unistd.h>
+#include <fcntl.h>
+#endif
 #include <boost/asio/write.hpp>
 
 #include <vsomeip/internal/logger.hpp>
@@ -53,11 +57,11 @@ local_server_endpoint_impl::local_server_endpoint_impl(
     acceptor_.listen(boost::asio::socket_base::max_connections, ec);
     boost::asio::detail::throw_error(ec, "acceptor listen");
 
-#if !defined(_WIN32) && !defined(__QNX__)
     if (chmod(_local.path().c_str(),
             static_cast<mode_t>(_configuration->get_permissions_uds())) == -1) {
         VSOMEIP_ERROR << __func__ << ": chmod: " << strerror(errno);
     }
+#if !defined(_WIN32) && !defined(__QNX__)
     credentials::activate_credentials(acceptor_.native_handle());
 #endif
 }
@@ -82,11 +86,11 @@ local_server_endpoint_impl::local_server_endpoint_impl(
    acceptor_.assign(_local.protocol(), native_socket, ec);
    boost::asio::detail::throw_error(ec, "acceptor assign native socket");
 
-#if !defined(_WIN32) && !defined(__QNX__)
     if (chmod(_local.path().c_str(),
             static_cast<mode_t>(_configuration->get_permissions_uds())) == -1) {
        VSOMEIP_ERROR << __func__ << ": chmod: " << strerror(errno);
     }
+#if !defined(_WIN32) && !defined(__QNX__)
     credentials::activate_credentials(acceptor_.native_handle());
 #endif
 }
@@ -431,7 +435,7 @@ void local_server_endpoint_impl::connection::start() {
 void local_server_endpoint_impl::connection::stop() {
     std::lock_guard<std::mutex> its_lock(socket_mutex_);
     if (socket_.is_open()) {
-#if !defined(_WIN32) && !defined(__QNX__)
+#ifndef _WIN32
         if (-1 == fcntl(socket_.native_handle(), F_GETFD)) {
             VSOMEIP_ERROR << "lse: socket/handle closed already '" << std::string(std::strerror(errno))
                           << "' (" << errno << ") " << get_path_local();
@@ -689,7 +693,7 @@ void local_server_endpoint_impl::connection::receive_cbk(
                         && recv_buffer_[its_start] == VSOMEIP_ASSIGN_CLIENT) {
                     client_t its_client = its_server->assign_client(
                             &recv_buffer_[its_start], uint32_t(its_end - its_start));
-#if !defined(_WIN32) && !defined(__QNX__)
+#ifndef _WIN32
                     if (security::get()->is_enabled()) {
                         if (!its_server->add_connection(its_client, shared_from_this())) {
                             VSOMEIP_WARNING << std::hex << "Client 0x" << its_host->get_client()
@@ -720,7 +724,7 @@ void local_server_endpoint_impl::connection::receive_cbk(
                     its_server->send_client_identifier(its_client);
                     assigned_client_ = true;
                 } else if (!its_server->is_routing_endpoint_ || assigned_client_) {
-#if !defined(_WIN32) && !defined(__QNX__)
+#ifndef _WIN32
                     credentials_t its_credentials = std::make_pair(_uid, _gid);
 #else
                     credentials_t its_credentials = std::make_pair(ANY_UID, ANY_GID);
@@ -785,7 +789,7 @@ client_t local_server_endpoint_impl::connection::get_bound_client() const {
     return bound_client_;
 }
 
-#if !defined(_WIN32) && !defined(__QNX__)
+#ifndef _WIN32
 void local_server_endpoint_impl::connection::set_bound_uid_gid(uid_t _uid, gid_t _gid) {
     bound_uid_ = _uid;
     bound_gid_ = _gid;
@@ -861,7 +865,7 @@ void local_server_endpoint_impl::connection::handle_recv_buffer_exception(
     VSOMEIP_ERROR << its_message.str();
     recv_buffer_.clear();
     if (socket_.is_open()) {
-#if !defined(_WIN32) && !defined(__QNX__)
+#ifndef _WIN32
         if (-1 == fcntl(socket_.native_handle(), F_GETFD)) {
             VSOMEIP_ERROR << "lse: socket/handle closed already '" << std::string(std::strerror(errno))
                           << "' (" << errno << ") " << get_path_local();

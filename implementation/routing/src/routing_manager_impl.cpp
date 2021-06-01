@@ -162,7 +162,7 @@ void routing_manager_impl::init() {
 }
 
 void routing_manager_impl::start() {
-#if !defined(_WIN32) && !defined(__QNX__)
+
     boost::asio::ip::address its_multicast;
     try {
         its_multicast = boost::asio::ip::address::from_string(configuration_->get_sd_multicast());
@@ -171,7 +171,7 @@ void routing_manager_impl::start() {
                 << configuration_->get_sd_multicast()
                 << "\". Please check your configuration.";
     }
-
+#if !defined(_WIN32) && !defined(__QNX__)
     netlink_connector_ = std::make_shared<netlink_connector>(
             host_->get_io(), configuration_->get_unicast_address(), its_multicast);
     netlink_connector_->register_net_if_changes_handler(
@@ -249,12 +249,12 @@ void routing_manager_impl::stop() {
         std::lock_guard<std::mutex> its_lock(version_log_timer_mutex_);
         version_log_timer_.cancel();
     }
-#if !defined(_WIN32) && !defined(__QNX__)
     {
         boost::system::error_code ec;
         std::lock_guard<std::mutex> its_lock(memory_log_timer_mutex_);
         memory_log_timer_.cancel(ec);
     }
+#if !defined(_WIN32) && !defined(__QNX__)
     if (netlink_connector_) {
         netlink_connector_->stop();
     }

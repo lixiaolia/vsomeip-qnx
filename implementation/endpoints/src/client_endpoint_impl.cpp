@@ -9,6 +9,12 @@
 #include <thread>
 #include <limits>
 
+#ifdef __QNX__
+#include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
+#endif
+
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ip/udp.hpp>
@@ -551,7 +557,7 @@ template<typename Protocol>
 void client_endpoint_impl<Protocol>::shutdown_and_close_socket_unlocked(bool _recreate_socket) {
     local_port_ = 0;
     if (socket_->is_open()) {
-#if !defined(_WIN32) && !defined(__QNX__)
+#ifndef _WIN32
         if (-1 == fcntl(socket_->native_handle(), F_GETFD)) {
             VSOMEIP_ERROR << "cei::shutdown_and_close_socket_unlocked: socket/handle closed already '"
                     << std::string(std::strerror(errno))
