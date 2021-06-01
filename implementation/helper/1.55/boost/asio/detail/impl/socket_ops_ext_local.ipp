@@ -97,7 +97,9 @@ signed_size_type recvfrom(socket_type s, buf* bufs, size_t count,
 {
   uid = 0xFFFFFFFF;
   gid = 0xFFFFFFFF;
+#ifndef __QNX__
   struct ucred *ucredp;
+#endif
   clear_last_error();
 #if defined(BOOST_ASIO_WINDOWS) || defined(__CYGWIN__)
   // Receive some data.
@@ -157,8 +159,7 @@ signed_size_type recvfrom(socket_type s, buf* bufs, size_t count,
         gid = ucredp->gid;
       }
 	}
-#endif // QNX不支持
-
+#endif
   }
   return result;
 #endif // defined(BOOST_ASIO_WINDOWS) || defined(__CYGWIN__)
