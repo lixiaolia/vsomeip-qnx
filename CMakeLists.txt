@@ -162,6 +162,7 @@ else ()
 find_package( Boost 1.55 COMPONENTS system thread filesystem REQUIRED )
 endif ()
 
+include_directories( ${CONFIG_DIR} )
 include_directories( ${Boost_INCLUDE_DIR} )
 
 if(Boost_FOUND)
@@ -185,7 +186,7 @@ else()
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
-	set(VSOMEIP_BOOST_HELPER implementation/helper/1.55)
+	set(VSOMEIP_BOOST_HELPER implementation/helper/1.70)
 else()
 message( STATUS "Using boost version: ${VSOMEIP_BOOST_VERSION}" )
 if (${VSOMEIP_BOOST_VERSION} GREATER 107400)

@@ -112,4 +112,6 @@ test/security_tests/security_test_local_config.json
 /install*/*
 .vscode
 /boost_1_71_0*/*
+/boost_1_55_0*/*
+/external*/*
 
