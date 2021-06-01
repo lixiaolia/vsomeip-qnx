@@ -1421,8 +1421,8 @@ void routing_manager_proxy::on_message(const byte_t *_data, length_t _size,
 
                 bool is_valid = its_policy->deserialize(its_policy_data, its_policy_size);
                 if (is_valid) {
-                    uint32_t its_uid;
-                    uint32_t its_gid;
+                    uid_t its_uid;
+                    gid_t its_gid;
                     is_valid = its_policy->get_uid_gid(its_uid, its_gid);
                     if (is_valid) {
                         if (is_internal_policy_update
@@ -1586,7 +1586,6 @@ void routing_manager_proxy::on_routing_info(const byte_t *_data,
                     VSOMEIP_INFO << std::hex << "Application/Client " << get_client()
                                 << " (" << host_->get_name() << ") is registered.";
 
-#if !defined(_WIN32) && !defined(__QNX__)
                     if (!its_security->check_credentials(get_client(), own_uid_, own_gid_)) {
                         VSOMEIP_ERROR << "vSomeIP Security: Client 0x" << std::hex << get_client()
                                 << " : routing_manager_proxy::on_routing_info: RIE_ADD_CLIENT: isn't allowed"
@@ -1595,7 +1594,7 @@ void routing_manager_proxy::on_routing_info(const byte_t *_data,
                         host_->on_state(static_cast<state_type_e>(inner_state_type_e::ST_DEREGISTERED));
                         return;
                     }
-#endif
+
                     {
                         std::lock_guard<std::mutex> its_lock(state_mutex_);
                         if (state_ == inner_state_type_e::ST_REGISTERING) {
@@ -1858,7 +1857,6 @@ void routing_manager_proxy::reconnect(const std::unordered_set<client_t> &_clien
     VSOMEIP_INFO << std::hex << "Application/Client " << get_client()
             <<": Reconnecting to routing manager.";
 
-#if !defined(_WIN32) && !defined(__QNX__)
     if (!its_security->check_credentials(get_client(), own_uid_, own_gid_)) {
         VSOMEIP_ERROR << "vSomeIP Security: Client 0x" << std::hex << get_client()
                 << " :  routing_manager_proxy::reconnect: isn't allowed"
@@ -1869,7 +1867,6 @@ void routing_manager_proxy::reconnect(const std::unordered_set<client_t> &_clien
         }
         return;
     }
-#endif
 
     std::lock_guard<std::mutex> its_lock(sender_mutex_);
     if (sender_) {

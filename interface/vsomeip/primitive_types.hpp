@@ -10,7 +10,7 @@
 #include <cstdint>
 #include <string>
 
-#if !defined(_WIN32) && !defined(__QNX__)
+#ifndef _WIN32
 #include <sys/types.h>
 #endif
 
@@ -53,7 +53,7 @@ typedef std::uint32_t pending_remote_offer_id_t;
 
 typedef std::uint32_t pending_security_update_id_t;
 
-#if !defined(_WIN32) && !defined(__QNX__)
+#if defined(_WIN32) || defined(__QNX__)
     typedef std::uint32_t uid_t;
     typedef std::uint32_t gid_t;
 #else

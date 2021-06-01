@@ -27,7 +27,9 @@ signed_size_type recv(socket_type s, buf* bufs, size_t count,
 {
   uid = 0xFFFFFFFF;
   gid = 0xFFFFFFFF;
+#ifndef __QNX__
   struct ucred *ucredp;
+#endif
   clear_last_error();
 #if defined(BOOST_ASIO_WINDOWS) || defined(__CYGWIN__)
   // Receive some data.
@@ -155,7 +157,8 @@ signed_size_type recvfrom(socket_type s, buf* bufs, size_t count,
         gid = ucredp->gid;
       }
 	}
-#endif
+#endif // QNX不支持
+
   }
   return result;
 #endif // defined(BOOST_ASIO_WINDOWS) || defined(__CYGWIN__)
@@ -217,9 +220,7 @@ void complete_iocp_recvfrom(
     ec = boost::asio::error::connection_refused;
   }
 }
-
 #else // defined(BOOST_ASIO_HAS_IOCP)
-
 bool non_blocking_recv(socket_type s,
     buf* bufs, size_t count, int flags, bool is_stream,
     boost::system::error_code& ec, size_t& bytes_transferred,
