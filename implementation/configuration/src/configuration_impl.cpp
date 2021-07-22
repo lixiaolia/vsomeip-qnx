@@ -3032,7 +3032,7 @@ configuration::ttl_map_t configuration_impl::get_ttl_factor_subscribes() const {
 }
 
 configuration::endpoint_queue_limit_t
-configuration_impl::get_endpoint_queue_limit(
+configuration_impl::_queue_limit(
         const std::string& _address, std::uint16_t _port) const {
     auto found_address = endpoint_queue_limits_.find(_address);
     if (found_address != endpoint_queue_limits_.end()) {

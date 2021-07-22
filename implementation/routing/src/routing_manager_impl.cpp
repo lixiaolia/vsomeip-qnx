@@ -162,7 +162,7 @@ void routing_manager_impl::init() {
 }
 
 void routing_manager_impl::start() {
-
+#if !defined(_WIN32) && !defined(__QNX__)
     boost::asio::ip::address its_multicast;
     try {
         its_multicast = boost::asio::ip::address::from_string(configuration_->get_sd_multicast());
@@ -171,7 +171,7 @@ void routing_manager_impl::start() {
                 << configuration_->get_sd_multicast()
                 << "\". Please check your configuration.";
     }
-#if !defined(_WIN32) && !defined(__QNX__)
+
     netlink_connector_ = std::make_shared<netlink_connector>(
             host_->get_io(), configuration_->get_unicast_address(), its_multicast);
     netlink_connector_->register_net_if_changes_handler(
@@ -179,6 +179,7 @@ void routing_manager_impl::start() {
             this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     netlink_connector_->start();
 #else
+    if (!routing_running_)
     {
         std::lock_guard<std::mutex> its_lock(pending_sd_offers_mutex_);
         start_ip_routing();
@@ -249,12 +250,13 @@ void routing_manager_impl::stop() {
         std::lock_guard<std::mutex> its_lock(version_log_timer_mutex_);
         version_log_timer_.cancel();
     }
+#if !defined(_WIN32) && !defined(__QNX__)
     {
         boost::system::error_code ec;
         std::lock_guard<std::mutex> its_lock(memory_log_timer_mutex_);
         memory_log_timer_.cancel(ec);
     }
-#if !defined(_WIN32) && !defined(__QNX__)
+
     if (netlink_connector_) {
         netlink_connector_->stop();
     }
@@ -428,6 +430,11 @@ bool routing_manager_impl::offer_service(client_t _client,
     stub_->on_offer_service(_client, _service, _instance, _major, _minor);
     on_availability(_service, _instance, true, _major, _minor);
     erase_offer_command(_service, _instance);
+#ifdef __QNX__
+    VSOMEIP_INFO << __func__ << " " << __LINE__ << " --> start_ip_routing()";
+    std::lock_guard<std::mutex> its_lock(pending_sd_offers_mutex_);
+    start_ip_routing();
+#endif
     return true;
 }
 
@@ -950,7 +957,7 @@ bool routing_manager_impl::send(client_t _client, const byte_t *_data,
                                 return false;
                             }
                             its_target = is_service_discovery ?
-                                         (sd_info_ ? sd_info_->get_endpoint(false) : nullptr) : its_info->get_endpoint(_reliable);
+                                        (sd_info_ ? sd_info_->get_endpoint(false) : nullptr) : its_info->get_endpoint(_reliable);
                             if (its_target) {
 #ifdef USE_DLT
                                 const uint16_t its_data_size
