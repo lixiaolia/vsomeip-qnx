@@ -1,0 +1,16 @@
+// This is a workaround for a problem with QNX 7 / qcc 5.4 and LLVM C++ Library.
+// E.g. Boost cannot be compiled without this as with the LLVM C++ Library qcc
+// disables compiler features which is a misconfiguration of the compiler
+// settings.
+
+#ifndef __QCC-5-4_CXX___CONFIG_66771214-7934-4DDC-94A3-B0511E80AE69__
+#define __QCC-5-4_CXX___CONFIG_66771214-7934-4DDC-94A3-B0511E80AE69__
+
+#include_next <__config>
+#if defined(__QNXNTO__) && \
+    (defined(__cpp_alias_templates) && (__cpp_alias_templates >= 200704L)) || \
+    (defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))))
+#    undef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+#endif
+
+#endif // __QCC-5-4_CXX___CONFIG_66771214-7934-4DDC-94A3-B0511E80AE69__
